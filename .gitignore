@@ -1,0 +1,26 @@
+# 大文件
+*.zip
+*.pdf
+*.doc
+*.docx
+
+# 临时文件
+temp/
+tmp/
+
+# Docker
+dify/
+
+# Python
+__pycache__/
+*.pyc
+
+# 其他项目文件（非 LLM 模块）
+任务管理模块UML/
+手持终端任务附件*/
+详细设计说明.docx
+个人报告、.doc
+~$*.docx
+
+# Windows
+Thumbs.db
