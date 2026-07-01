@@ -8,7 +8,9 @@
     "dev:frontend": "vite",
     "stream": "cd stream-server && start_stream.bat",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -18,9 +20,11 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
+    "@vitest/coverage-v8": "^4.1.9",
     "concurrently": "^10.0.3",
     "vite": "^8.0.16",
-    "vite-plugin-vue-devtools": "^8.1.2"
+    "vite-plugin-vue-devtools": "^8.1.2",
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": "^22.18.0 || >=24.12.0"
