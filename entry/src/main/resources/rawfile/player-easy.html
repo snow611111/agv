@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGV EasyPlayer</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; overflow:hidden; color:#fff; font:12px monospace; }
+  #logWrap {
+    position:absolute; inset:0; z-index:9;
+    padding:16px; overflow-y:auto;
+    background:rgba(0,0,0,0.92);
+  }
+  .ok { color:#67c23a; }
+  .err { color:#f56c6c; }
+  .warn { color:#e6a23c; }
+  #playerWrap { width:100%; height:100%; position:absolute; inset:0; z-index:1; }
+</style>
+</head>
+<body>
+<div id="playerWrap"></div>
+<div id="logWrap"></div>
+
+<script>
+var logEl = document.getElementById('logWrap');
+var logs = [];
+function log(msg, cls) {
+  cls = cls || '';
+  var t = new Date().toLocaleTimeString();
+  logs.push('<div class="' + cls + '">[' + t + '] ' + msg + '</div>');
+  logEl.innerHTML = logs.join('');
+}
+
+log('EasyPlayer 启动...', 'ok');
+
+// 1. WASM 路径配置
+window.JESSIBUCA_PRO_WASM_URL = 'EasyPlayer-pro.wasm';
+window.JESSIBUCA_SNAP_WASM_URL = 'EasyPlayer-snap.wasm';
+window.JESSIBUCA_DECODE_WASM_URL = 'EasyPlayer-decode.js';
+log('JESSIBUCA 路径已设置', 'ok');
+</script>
+
+<script src="EasyPlayer-lib.js" onerror="log('EasyPlayer-lib.js 加载失败', 'err')"></script>
+<script src="EasyPlayer-pro.js" onerror="log('EasyPlayer-pro.js 加载失败', 'err')"></script>
+
+<script>
+log('EasyPlayer-lib.js 存在: ' + (typeof window.EasyPlayerLib !== 'undefined'), 'ok');
+log('EasyPlayer-pro.js 存在: ' + (typeof window.EasyPlayerPro !== 'undefined' || typeof window['EasyPlayer-pro'] !== 'undefined'), 'ok');
+
+var wrap = document.getElementById('playerWrap');
+
+window.easyPlayer = null;
+
+window.startEasy = function(url) {
+  log('startEasy 被调用, url=' + url);
+  var EP = window.EasyPlayerPro || window['EasyPlayer-pro'];
+  if (!EP) { log('EasyPlayerPro 未定义', 'err'); return; }
+
+  if (window.easyPlayer) {
+    try { window.easyPlayer.destroy(); } catch(e) { log('销毁旧播放器失败: ' + e, 'warn'); }
+    window.easyPlayer = null;
+  }
+  wrap.innerHTML = '';
+
+  try {
+    var player = new EP(wrap, {
+      isLive: true,
+      bufferTime: 0.3,
+      stretch: true,
+      MSE: false,
+      WCS: false,
+      hasAudio: false
+    });
+    log('EasyPlayer 实例已创建', 'ok');
+
+    player.play(url).then(function() {
+      log('播放成功', 'ok');
+    }).catch(function(e) {
+      log('播放失败: ' + (e && e.message ? e.message : JSON.stringify(e)), 'err');
+    });
+
+    window.easyPlayer = player;
+  } catch(e) {
+    log('创建播放器异常: ' + (e && e.message ? e.message : JSON.stringify(e)), 'err');
+  }
+};
+
+log('初始化完成，等待 startEasy 调用', 'ok');
+</script>
+</body>
+</html>

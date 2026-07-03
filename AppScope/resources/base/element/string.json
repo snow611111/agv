@@ -1,0 +1,12 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "地铁巡线车巡检系统"
+    },
+    {
+      "name": "module_desc",
+      "value": "地铁隧道巡线车智能巡检系统"
+    }
+  ]
+}

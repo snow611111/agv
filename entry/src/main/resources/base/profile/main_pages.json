@@ -1,0 +1,13 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/SystemCheck",
+    "pages/TaskList",
+    "pages/ExecutePage",
+    "pages/TaskHistory",
+    "pages/TaskInfoTest",
+    "pages/FlvTest",
+    "pages/EasyPlayerTest",
+    "pages/CameraTest"
+  ]
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGV FLV Player</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; overflow:hidden; }
+  video { width:100%; height:100vh; object-fit:contain; display:block; }
+  .overlay {
+    position:absolute; top:8px; left:8px;
+    background:rgba(0,0,0,0.7); color:#58a6ff;
+    padding:3px 8px; border-radius:4px;
+    font:10px Consolas,monospace; z-index:3; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+<div class="overlay" id="info">加载中...</div>
+<video id="video" autoplay playsinline muted></video>
+
+<script src="mpegts.min.js"></script>
+<script>
+var video = document.getElementById('video');
+var info = document.getElementById('info');
+function log(msg) { info.textContent = msg; }
+
+window.flvPlayer = null;
+
+window.startFlv = function(flvUrl) {
+  if (typeof mpegts === 'undefined') { log('mpegts.js 未加载'); return; }
+  if (!mpegts.isSupported()) { log('FLV 不支持'); return; }
+
+  if (window.flvPlayer) {
+    try { window.flvPlayer.destroy(); } catch(e) {}
+    window.flvPlayer = null;
+  }
+
+  var player = mpegts.createPlayer({
+    type: 'flv', isLive: true, url: flvUrl,
+    hasAudio: false, hasVideo: true,
+    enableStashBuffer: false,
+  });
+
+  player.on(mpegts.Events.STATISTICS_INFO, function(stats) {
+    var speed = stats.speed || 0;
+    var txt = speed >= 1000 ? (speed/1000).toFixed(1)+'MB/s' : speed.toFixed(0)+'KB/s';
+    info.textContent = 'FLV | ' + txt + ' | ' + (video.videoWidth||0) + 'x' + (video.videoHeight||0);
+  });
+
+  player.on(mpegts.Events.MEDIA_INFO, function() {
+    video.play().catch(function(){});
+  });
+
+  player.on(mpegts.Events.ERROR, function(type) {
+    log('FLV 错误: ' + type);
+  });
+
+  player.attachMediaElement(video);
+  player.load();
+  window.flvPlayer = player;
+  log('FLV 连接中...');
+};
+</script>
+</body>
+</html>
