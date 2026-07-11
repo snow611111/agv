@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGV EasyPlayer</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; overflow:hidden; color:#fff; font:12px monospace; }
+  #logWrap {
+    position:absolute; bottom:0; left:0; right:0; z-index:9;
+    max-height:40%; padding:6px 10px; overflow-y:auto;
+    background:rgba(0,0,0,0.8); font-size:10px;
+  }
+  .ok { color:#67c23a; }
+  .err { color:#f56c6c; }
+  .warn { color:#e6a23c; }
+  .info { color:#58a6ff; }
+  #playerWrap { width:100%; height:100%; position:absolute; inset:0; z-index:1; }
+</style>
+</head>
+<body>
+<div id="playerWrap"></div>
+<div id="logWrap"></div>
+
+<script>
+var logEl = document.getElementById('logWrap');
+var logs = [];
+function log(msg, cls) {
+  cls = cls || 'info';
+  var t = new Date().toLocaleTimeString();
+  var m = '[' + t + '] ' + msg;
+  logs.push('<div class="' + cls + '">' + m + '</div>');
+  logEl.innerHTML = logs.join('');
+  console.log(m);
+}
+
+// 全局 JS 错误捕获
+window.onerror = function(msg, src, line, col, err) {
+  log('JS ERROR: ' + msg + ' @' + src + ':' + line, 'err');
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  log('未捕获 Promise: ' + (e.reason && e.reason.message ? e.reason.message : JSON.stringify(e.reason)), 'err');
+});
+
+log('EasyPlayer 启动...', 'ok');
+log('navigator.userAgent: ' + navigator.userAgent, 'info');
+log('location.href: ' + location.href, 'info');
+
+// WASM 路径配置
+window.JESSIBUCA_PRO_WASM_URL = 'EasyPlayer-pro.wasm';
+window.JESSIBUCA_SNAP_WASM_URL = 'EasyPlayer-snap.wasm';
+window.JESSIBUCA_DECODE_WASM_URL = 'EasyPlayer-decode.js';
+log('JESSIBUCA_ 已设置', 'ok');
+log('  PRO_WASM: ' + window.JESSIBUCA_PRO_WASM_URL, 'info');
+log('  SNAP_WASM: ' + window.JESSIBUCA_SNAP_WASM_URL, 'info');
+log('  DECODE: ' + window.JESSIBUCA_DECODE_WASM_URL, 'info');
+</script>
+
+<script src="EasyPlayer-lib.js" onload="log('EasyPlayer-lib.js 加载成功', 'ok')" onerror="log('EasyPlayer-lib.js 加载失败', 'err')"></script>
+<script src="EasyPlayer-pro.js" onload="log('EasyPlayer-pro.js 加载成功', 'ok')" onerror="log('EasyPlayer-pro.js 加载失败', 'err')"></script>
+
+<script>
+var wrap = document.getElementById('playerWrap');
+window.easyPlayer = null;
+
+log('检查 EasyPlayer 全局变量:');
+log('  window.EasyPlayerPro: ' + (typeof window.EasyPlayerPro), 'info');
+log('  window["EasyPlayer-pro"]: ' + (typeof window['EasyPlayer-pro']), 'info');
+log('  window.EasyPlayerLib: ' + (typeof window.EasyPlayerLib), 'info');
+log('  window.mpegts: ' + (typeof window.mpegts), 'info');
+
+// 监控 wrap 的 DOM 变化
+var observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(m) {
+    log('DOM变化: ' + m.type + ' | 新增节点=' + m.addedNodes.length + ' | 删除节点=' + m.removedNodes.length, 'info');
+    for (var i = 0; i < m.addedNodes.length; i++) {
+      var n = m.addedNodes[i];
+      log('  新增: <' + (n.tagName || n.nodeName) + '> class=' + (n.className || '') + ' id=' + (n.id || ''), 'info');
+    }
+  });
+});
+observer.observe(wrap, { childList: true, subtree: true });
+
+window.startEasy = function(url) {
+  log('=== startEasy 调用 ===', 'ok');
+  log('URL: ' + url, 'info');
+
+  var EP = window.EasyPlayerPro || window['EasyPlayer-pro'];
+  if (!EP) { log('EasyPlayerPro 不存在!', 'err'); return; }
+
+  if (window.easyPlayer) {
+    log('销毁旧播放器...', 'warn');
+    try { window.easyPlayer.destroy(); } catch(e) { log('destroy异常: ' + e, 'err'); }
+    window.easyPlayer = null;
+  }
+
+  try {
+    var cfg = {
+      isLive: true,
+      bufferTime: 0.3,
+      stretch: true,
+      MSE: false,
+      WCS: false,
+      hasAudio: false
+    };
+    log('创建 EasyPlayer, 配置=' + JSON.stringify(cfg), 'info');
+
+    var player = new EP(wrap, cfg);
+    log('实例已创建, typeof=' + typeof player, 'ok');
+    log('player.play 类型: ' + typeof player.play, 'info');
+    log('player.destroy 类型: ' + typeof player.destroy, 'info');
+
+    var startTime = Date.now();
+    player.play(url).then(function() {
+      var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      log('=== 播放成功! === (耗时 ' + elapsed + 's)', 'ok');
+    }).catch(function(e) {
+      var elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      log('=== 播放失败 === (耗时 ' + elapsed + 's)', 'err');
+      log('错误类型: ' + typeof e, 'err');
+      log('错误内容: ' + (e && e.message ? e.message : JSON.stringify(e)), 'err');
+      if (e && e.stack) log('堆栈: ' + String(e.stack).substring(0, 200), 'err');
+    });
+
+    window.easyPlayer = player;
+
+    // 定时检查播放器状态
+    var checkTimer = setInterval(function() {
+      if (window.easyPlayer !== player) { clearInterval(checkTimer); return; }
+      var elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
+      log('[状态检查 ' + elapsed + 's] player存在=' + (!!window.easyPlayer), 'info');
+      // 检查 wrap 里有没有 video/canvas 元素
+      var videos = wrap.querySelectorAll('video');
+      var canvases = wrap.querySelectorAll('canvas');
+      if (videos.length > 0) log('  wrap内video数: ' + videos.length + ', videoWidth=' + (videos[0].videoWidth || 0), 'info');
+      if (canvases.length > 0) log('  wrap内canvas数: ' + canvases.length, 'info');
+      if (videos.length === 0 && canvases.length === 0) {
+        log('  wrap内无video/canvas元素', 'warn');
+      }
+    }, 5000);
+
+  } catch(e) {
+    log('创建异常: ' + (e && e.message ? e.message : JSON.stringify(e)), 'err');
+    if (e && e.stack) log('堆栈: ' + String(e.stack).substring(0, 300), 'err');
+  }
+};
+
+log('初始化完成，等待 startEasy', 'ok');
+</script>
+</body>
+</html>

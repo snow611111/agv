@@ -130,6 +130,7 @@ class Handler(BaseHTTPRequestHandler):
                 '.css': 'text/css', '.m3u8': 'application/vnd.apple.mpegurl',
                 '.ts': 'video/mp2t', '.jpg': 'image/jpeg', '.png': 'image/png',
                 '.json': 'application/json',
+                '.wasm': 'application/wasm',
             }
             ext = os.path.splitext(file_path)[1].lower()
             ctype = content_types.get(ext, 'application/octet-stream')
@@ -192,7 +193,7 @@ if __name__ == '__main__':
     print(f'  http://127.0.0.1:{PORT}/cam_test.html   (双模)')
     print(f'{"="*55}\n')
 
-    server = ThreadingHTTPServer(('127.0.0.1', PORT), Handler)
+    server = ThreadingHTTPServer(('0.0.0.0', PORT), Handler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

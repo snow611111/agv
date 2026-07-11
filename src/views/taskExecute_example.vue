@@ -389,9 +389,9 @@ let stopDebounce = 0
 let easyPlayerLoadPromise = null
 
 const DIFY_CONFIG = {
-  appId: import.meta.env.VITE_DIFY_APP_ID || 'ab90ca0c-95b9-4cbb-9f24-97166e6c5032',
-  apiKey: import.meta.env.VITE_DIFY_API_KEY || 'app-ix0KtVqKKJIJ8Jk5t2bkotVa',
-  apiUrl: import.meta.env.VITE_DIFY_API_URL || 'http://192.168.2.53/v1/chat-messages',
+  appId: import.meta.env.VITE_DIFY_APP_ID || '',
+  apiKey: import.meta.env.VITE_DIFY_API_KEY || 'app-rvIKiruOTfezW5l7C0E4oE9i',
+  apiUrl: import.meta.env.VITE_DIFY_API_URL || 'http://localhost/v1/chat-messages',
   user: import.meta.env.VITE_DIFY_USER || 'inspector-001',
   timeoutMs: Number(import.meta.env.VITE_DIFY_TIMEOUT_MS || 120000),
   useMockOnFailure: String(import.meta.env.VITE_DIFY_USE_MOCK || 'false') === 'true',

@@ -9,8 +9,8 @@ const router = useRouter()
 const API = import.meta.env.VITE_API_BASE || '/prod-api'
 const IMG_BASE = import.meta.env.VITE_IMG_BASE || (API + '/file')
 const REPORT_AI_CONFIG = {
-  apiUrl: import.meta.env.VITE_REPORT_AI_API_URL || '',
-  apiKey: import.meta.env.VITE_REPORT_AI_API_KEY || '',
+  apiUrl: import.meta.env.VITE_REPORT_AI_API_URL || 'http://localhost/v1/workflows/run',
+  apiKey: import.meta.env.VITE_REPORT_AI_API_KEY || 'app-7XWKdUkyZY3uaLjkN7LwBd8P',
   user: import.meta.env.VITE_REPORT_AI_USER || 'agv-terminal',
   timeoutMs: Number(import.meta.env.VITE_REPORT_AI_TIMEOUT_MS || 300000),
 }
@@ -51,9 +51,18 @@ const reportError = ref('')
 const reportContent = ref('')
 
 // 当前选中缺陷的图片 URL
+function fixImageUrl(raw) {
+  if (!raw) return ''
+  // 车端本地地址 → 换成车端对外 IP
+  if (raw.startsWith('http://127.0.0.1:6505/')) {
+    return 'http://192.168.2.57/prod-api/file/' + raw.replace('http://127.0.0.1:6505/', '')
+  }
+  if (/^https?:\/\//i.test(raw)) return raw
+  return IMG_BASE + raw
+}
 const currentImageUrl = computed(() => {
-  if (selectedFlaw.value && selectedFlaw.value.flawImageUrl) {
-    return IMG_BASE + selectedFlaw.value.flawImageUrl
+  if (selectedFlaw.value) {
+    return fixImageUrl(selectedFlaw.value.flawImageUrl || selectedFlaw.value.flawImage || '')
   }
   return ''
 })
