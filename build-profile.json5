@@ -1,12 +1,26 @@
 {
   "app": {
-    "signingConfigs": [],
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\enial\\.ohos\\config\\default_xxc_hm_2MLoNFM4BhkAcHyGstgmgycLRu9JixiqyD6rW8ADQeI=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B4325615E06177808050EA1BB584831D797244C1072844B6BCFA6CA943C533227BEF9B94FD3DFD7",
+          "profile": "C:\\Users\\enial\\.ohos\\config\\default_xxc_hm_2MLoNFM4BhkAcHyGstgmgycLRu9JixiqyD6rW8ADQeI=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\enial\\.ohos\\config\\default_xxc_hm_2MLoNFM4BhkAcHyGstgmgycLRu9JixiqyD6rW8ADQeI=.p12",
+          "storePassword": "0000001B499CA6552DDF24093261F8D56E6F5C103AA5F5E21A344FE89B7C0E4C6C52980ADAC1440915B60F"
+        }
+      }
+    ],
     "products": [
       {
         "name": "default",
         "signingConfig": "default",
         "targetSdkVersion": "6.1.1(24)",
-        "compatibleSdkVersion": "6.1.1(24)",
+        "compatibleSdkVersion": "6.1.0(23)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

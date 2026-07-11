@@ -8,8 +8,8 @@ import http from '@ohos.net.http'
 import { FlawMarker } from '../common/models/TaskModels'
 
 const BASE = 'http://192.168.2.57/prod-api'
-const FLV_HOST = '172.21.128.1'
-const FLV_PORT = '8088'
+const FLV_HOST = '192.168.2.57'
+const FLV_PORT = '80'
 
 // ===== HTTP 帮助 =====
 async function httpGet(url: string): Promise<string> {
@@ -77,6 +77,7 @@ struct ExecutePage {
   private webController: webview.WebviewController = new webview.WebviewController()
   @State cam: number = 1
   @State videoReady: boolean = false
+  private camIds: string[] = []  // 从 /easy-api/devices 拉到的真实摄像头 ID
 
   // ===== 车辆状态 =====
   @State sysTime: string = '--'
@@ -125,6 +126,7 @@ struct ExecutePage {
     await this.loadTaskDetail()
     await this.fetchHeartbeat()
     await this.fetchFlaws()
+    await this.fetchCamIds()
 
     this.timer = setInterval(() => {
       if (!this.autoRefresh) return
@@ -181,6 +183,31 @@ struct ExecutePage {
     } catch (e) { /* silent */ }
   }
 
+  async fetchCamIds(): Promise<void> {
+    try {
+      const req = http.createHttp()
+      const resp = await req.request('http://192.168.2.57/easy-api/devices?page=1&size=999&status=&id&name', {
+        method: http.RequestMethod.GET,
+        expectDataType: http.HttpDataType.STRING,
+        connectTimeout: 5000,
+        readTimeout: 5000,
+        header: { 'Authorization': 'Basic YWRtaW4xMjM6QWRtaW5AMTIz' },
+      })
+      req.destroy()
+      const data = JSON.parse(resp.result as string) as Record<string, Object>
+      const items = (data['items'] || data['list'] || data['rows'] || data['data'] || []) as Object[]
+      this.camIds = []
+      for (let i = 0; i < items.length; i++) {
+        const d = items[i] as Record<string, Object>
+        const id = (d['id'] as string) || ''
+        if (id) this.camIds.push(id)
+      }
+    } catch (e) { /* silent */ }
+    if (this.camIds.length === 0) {
+      this.camIds = ['cam1', 'cam2', 'cam3', 'cam4']
+    }
+  }
+
   // ===== 视频 =====
   onVideoReady(): void {
     this.videoReady = true
@@ -188,7 +215,8 @@ struct ExecutePage {
   }
 
   startFlvStream(): void {
-    const url = 'http://' + FLV_HOST + ':' + FLV_PORT + '/flv/cam' + this.cam
+    const id = this.camIds[this.cam - 1] || ('cam' + this.cam)
+    const url = 'http://' + FLV_HOST + '/webrtc-api/live/' + id + '_01.flv'
     this.webController.runJavaScript('startFlv("' + url + '")')
   }
 
@@ -343,7 +371,8 @@ struct ExecutePage {
           Text(' / ').fontSize(12).fontColor('#C0C4CC')
           Text('任务巡视').fontSize(12).fontWeight(FontWeight.Medium).fontColor('#303133')
           Blank()
-          Text(this.taskCode).fontSize(11).fontColor('#909399')
+          Text('IDS:' + this.camIds.join(',')).fontSize(9).fontColor('#C0C4CC')
+          Text(' | ' + this.taskCode).fontSize(11).fontColor('#909399')
         }
         .width('100%').padding({ left: 20, top: 12, bottom: 12 }).backgroundColor(Color.White)
 
